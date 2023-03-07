@@ -21,7 +21,11 @@ val_utils/
 
 # interactive plots
 *.html
-
+data/
+results/
+results1/
+results2/
+*txt
 sample_dataset/
 model/
 weights/
@@ -32,3 +36,4 @@ sample_dataset/
 *.pth
 *ckpt
 
+ckpt/

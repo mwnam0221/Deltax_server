@@ -80,18 +80,16 @@ def evaluate():
     depth_decoder.eval()
     
     # result test set
-    ######
     save_img_dir = f'./results/submission_{timestamp}'
     if not os.path.isdir(save_img_dir):
         os.makedirs(save_img_dir)
     output_directory = './results'
-    ######
     file_name = '/home/dan/NeWCRFs/data_splits/test_files_CVPR.txt'
     with open(file_name, "r") as f:
         lines = f.readlines()
     test_image_paths = ['/hdd/team_2/syns_patches/'+x.strip() for x in natsort.natsorted(lines)]
     image_names = ['_'.join(x.split('/')[4:]) for x in test_image_paths]
-    ######
+
     # Predict depths for test set
     pred_depths = []
     with torch.no_grad():
