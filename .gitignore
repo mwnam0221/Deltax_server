@@ -33,7 +33,12 @@ weights/
 runs/
 sample_dataset/
 *.jpg
+*.png
+
 *.pth
 *ckpt
-
 ckpt/
+
+*.npz
+*.zip
+*.npy

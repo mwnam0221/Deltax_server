@@ -99,16 +99,6 @@ def evaluate():
             # Load image and preprocess
             input_image = pil.open(image_path).convert('RGB')
             w, h = input_image.size
-            # ##############################################################
-            # pad_h = ((h + 31) // 32) * 32 - h
-            # pad_w = ((w + 31) // 32) * 32 - w
-            # top, bottom = pad_h // 2, pad_h - pad_h // 2
-            # left, right = pad_w // 2, pad_w - pad_w // 2
-            # # Pad the input image using np.pad()
-            # padded_image = np.pad(input_image, ((top, bottom), (left, right), (0, 0)), mode='edge')
-            # output_image = padded_image[top:top+feed_height, left:left+feed_width]
-            # print(padded_image.shape, output_image.shape)  #(384, 1248, 3) (320, 1024, 3)
-            ##############################################################
             input_image = input_image.resize((feed_width, feed_height), pil.LANCZOS)
             input_image = transforms.ToTensor()(input_image).unsqueeze(0)
             
