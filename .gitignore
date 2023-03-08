@@ -42,3 +42,4 @@ ckpt/
 *.npz
 *.zip
 *.npy
+*.gif
