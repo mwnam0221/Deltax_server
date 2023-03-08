@@ -24,6 +24,20 @@ save_img_dir = f'./results/submission_{timestamp}'
 if not os.path.isdir(save_img_dir):
     os.makedirs(save_img_dir)
 
+
+def depth_value_to_depth_image(depth_values, disp=True):
+    depth_values = cv2.normalize(depth_values, None, 0, 1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_64F)
+    
+    if disp:
+        depth = 1/depth_values
+        depth = (depth).astype(np.uint8)
+    else:
+        depth = (depth_values * 255).astype(np.uint8)
+        
+    depth = cv2.applyColorMap(depth, cv2.COLORMAP_MAGMA)
+    
+    return depth
+
 # Function to compute the final disparity map from the predicted depth map
 def final_disp(depth_values, is_gt = False):
     # Normalize the depth values
@@ -82,6 +96,9 @@ for i,img_path in enumerate(img_lists):
     stacked.paste(pred, (orig_size[0], 0))
 
     stacked.save(f"{save_img_dir}/pred_{i}.png")
+    
+    cv2.imwrite(f'{save_img_dir}/pred_{i}.jpg', depth_value_to_depth_image(out.numpy().squeeze(), disp=False))
+
     print("saved pred.png")
 
 #saving
