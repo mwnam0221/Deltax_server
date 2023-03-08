@@ -31,16 +31,34 @@ import torch
 from zoedepth.models.builder import build_model
 from zoedepth.utils.config import get_config
 from pprint import pprint
+import glob
+from tqdm import tqdm 
+import natsort
+import cv2
+import os
+from datetime import datetime
+
+timestamp = datetime.now().strftime("%m_%d_%Y_%H_%M")
+save_img_dir = f'./results/submission_{timestamp}'
+if not os.path.isdir(save_img_dir):
+    os.makedirs(save_img_dir)
+
+def final_disp(depth_values, is_gt = False):
+    depth_values = cv2.normalize(depth_values, None, 0, 1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_64F)
+    disp = 1/depth_values
+    
+    return disp
 
 
-torch.hub.help("intel-isl/MiDaS", "DPT_BEiT_L_384", force_reload=True) 
+# torch.hub.help("intel-isl/MiDaS", "DPT_BEiT_L_384", force_reload=True) 
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 if DEVICE == "cpu":
     print("WARNING: Running on CPU. This will be slow. Check your CUDA installation.")
 
 print("*" * 20 + " Testing zoedepth " + "*" * 20)
-conf = get_config("zoedepth", "infer")
+# conf = get_config("zoedepth", "infer")
+conf = get_config("zoedepth", "infer", config_version="kitti")
 
 
 print("Config:")
@@ -67,32 +85,37 @@ print("\n\n")
 print("-"*20 + " Testing on an indoor scene from url " + "-"*20)
 
 # Test img
-url = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS4W8H_Nxk_rs3Vje_zj6mglPOH7bnPhQitBH8WkqjlqQVotdtDEG37BsnGofME3_u6lDk&usqp=CAU"
-img = get_image_from_url(url)
-orig_size = img.size
-X = ToTensor()(img)
-X = X.unsqueeze(0).to(DEVICE)
+pred_depths = []
+img_lists=natsort.natsorted(glob.glob('/home/dan/Deltax_server/MIM-Depth-Estimation/data/*.png'))
+for i,img_path in enumerate(img_lists):
+    # img = cv2.imread(img_path)
+    img = Image.open(img_path)
+    orig_size = img.size
+    X = ToTensor()(img)
+    X = X.unsqueeze(0).to(DEVICE)
 
-print("X.shape", X.shape)
-print("predicting")
+    print("X.shape", X.shape)
+    print("predicting")
 
-with torch.no_grad():
-    out = model.infer(X).cpu()
+    with torch.no_grad():
+        out = model.infer(X).cpu()
 
-# or just, 
-# out = model.infer_pil(img)
+        final_disp_pred=final_disp(out.numpy().squeeze())
+        pred_depths.append(final_disp_pred)
+                
+    print("output.shape", out.shape)
+    pred = Image.fromarray(colorize(out))
+    # Stack img and pred side by side for comparison and save
+    pred = pred.resize(orig_size, Image.ANTIALIAS)
+    stacked = Image.new("RGB", (orig_size[0]*2, orig_size[1]))
+    stacked.paste(img, (0, 0))
+    stacked.paste(pred, (orig_size[0], 0))
 
+    stacked.save(f"{save_img_dir}/pred_{i}.png")
+    print("saved pred.png")
 
-print("output.shape", out.shape)
-pred = Image.fromarray(colorize(out))
-# Stack img and pred side by side for comparison and save
-pred = pred.resize(orig_size, Image.ANTIALIAS)
-stacked = Image.new("RGB", (orig_size[0]*2, orig_size[1]))
-stacked.paste(img, (0, 0))
-stacked.paste(pred, (orig_size[0], 0))
+#saving
+print(len(pred_depths))
+output_path = os.path.join(save_img_dir, "pred.npz")
+np.savez_compressed(output_path, pred=pred_depths)
 
-stacked.save("pred.png")
-print("saved pred.png")
-
-
-model.infer_pil(img, output_type="pil").save("pred_raw.png")
