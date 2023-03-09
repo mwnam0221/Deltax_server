@@ -90,23 +90,13 @@ for i,img_path in enumerate(img_lists):
     print("output.shape", out.shape)
     pred = Image.fromarray(colorize(out))
     # Stack img and pred side by side for comparison and save
-    pred = pred.resize(orig_size, Image.ANTIALIAS)
-    stacked = Image.new("RGB", (orig_size[0]*2, orig_size[1]))
-    stacked.paste(img, (0, 0))
-    stacked.paste(pred, (orig_size[0], 0))
-
-    stacked.save(f"{save_img_dir}/pred_{i}.png")
-    
-    cv2.imwrite(f'{save_img_dir}/pred_{i}.jpg', depth_value_to_depth_image(out.numpy().squeeze(), disp=False))
-
     image = np.array(img)
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    cv2.imwrite(f'{save_img_dir}/pred_input_{i}.jpg', image)
-
+    
     final_viz = np.hstack([image, depth_value_to_depth_image(out.numpy().squeeze(), disp=False)])
     cv2.imwrite(f'{save_img_dir}/final_viz_{i}.jpg', final_viz)
 
-    print("saved pred.png")
+    print("saved pred.jpg")
 
 #saving
 print(len(pred_depths))
